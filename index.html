@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#151719" id="themeColorMeta">
+<meta name="color-scheme" content="light dark">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="description" content="Aplicativo de vistorias de TI em lojas">
+<meta name="application-name" content="Checklist TI">
+<title>Checklist TI</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/logo-brand.png" type="image/png">
+<link rel="apple-touch-icon" href="assets/logo-square.png">
+<link rel="preload" href="assets/fonts/inter-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<script>
+/* Aplica o tema salvo antes da primeira pintura (evita flash). */
+(function(){try{var t=localStorage.getItem('ti-theme-pref');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+</script>
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/layout.css">
+<link rel="stylesheet" href="css/screens.css">
+<link rel="stylesheet" href="css/overlays.css">
+<!-- Bibliotecas: jsPDF (PDF) e SheetJS (Excel) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body data-view="checklist">
+
+<!-- SPLASH -->
+<div id="splash" role="status" aria-live="polite" aria-label="Carregando aplicativo">
+  <div class="splash-glow" aria-hidden="true"></div>
+  <div class="splash-stage">
+    <div class="splash-orbit"><div class="splash-logo splash-logo-real"><img src="assets/logo-brand.png" alt="Checklist TI"></div></div>
+    <div class="splash-text">
+      <div class="splash-title">Checklist TI</div>
+      <div class="splash-sub">Sistema de vistorias corporativas</div>
+    </div>
+    <div class="splash-progress">
+      <div class="splash-bar"><div class="splash-bar-fill" id="splashBar"></div></div>
+      <div class="splash-meta"><span class="splash-status" id="splashStatus">Iniciando…</span><span class="splash-pct" id="splashPct">0%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+    <div class="sb-head">
+      <div class="brand-logo-wrap"><img class="brand-logo" src="assets/logo-brand.png" alt="Checklist TI" width="44" height="30"></div>
+      <div class="brand-info">
+        <div class="brand-name">Checklist TI</div>
+        <div class="brand-user" id="brandUser">Vistorias de TI</div>
+      </div>
+      <button type="button" class="icon-btn sb-collapse" id="sbCollapse" aria-label="Recolher menu lateral" aria-expanded="true" title="Recolher menu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
+    </div>
+    <div class="sb-label">Seções</div>
+    <nav class="section-tabs" id="sectionTabs" role="tablist" aria-label="Seções do checklist"></nav>
+    <div class="sb-foot">
+      <button type="button" class="sb-link kbd-only" onclick="openModal('shortcutsModal')" aria-label="Atalhos de teclado" title="Atalhos de teclado (?)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg><span>Atalhos</span></button>
+      <button type="button" class="sb-link" onclick="openSettings()" aria-label="Configurações" title="Configurações"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span>Configurações</span></button>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="page-head">
+        <div class="crumbs" id="pageCrumbs" aria-label="Você está em"><span>Vistoria</span></div>
+        <h1 class="page-title" id="pageTitle">Visão geral</h1>
+        <button type="button" class="ctx-toggle needs" id="ctxToggle" aria-expanded="false" aria-controls="ctxPanel" title="Contexto da vistoria: loja, data e responsável"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M9 20v-6h6v6"/></svg><span id="ctxToggleText">Selecionar loja</span><svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="topbar-actions">
+        <div class="save-status" id="saveStatus" data-state="idle" title="Nenhuma alteração nesta vistoria." aria-label="Sem alterações"><span class="ss-dot" aria-hidden="true"></span><span class="ss-text">Sem alterações</span><span class="ss-time"></span></div>
+        <button type="button" class="palette-btn" id="paletteBtn" aria-label="Abrir paleta de comandos" aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K" title="Buscar e executar comandos (Ctrl+K)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span class="palette-btn-text">Buscar ou executar…</span><kbd class="kbd" id="paletteKbd" aria-hidden="true">Ctrl K</kbd></button>
+        <button type="button" class="icon-btn" id="searchToggle" onclick="toggleSearch()" aria-label="Filtrar itens do checklist" title="Filtrar itens (/)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></button>
+      </div>
+    </header>
+
+    <details class="context" id="ctxPanel" open>
+      <summary>Contexto da vistoria<span id="ctxSummary"></span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+      <div class="field-grid">
+        <div class="field-chip">
+          <label for="fLoja">Loja</label>
+          <select id="fLoja">
+            <option value="">Selecionar...</option>
+          <option>LJ01 - Matriz</option>
+          <option>LJ02 - Centro</option>
+          <option>LJ03 - Jardim das Flores</option>
+          <option>LJ04 - Vila Nova</option>
+          <option>LJ05 - Shopping Norte</option>
+          <option>LJ06 - Parque Industrial</option>
+          <option>LJ07 - Praça da Estação</option>
+          <option>LJ08 - Zona Sul</option>
+          <option>LJ09 - Avenida Central</option>
+          <option>LJ10 - Centro de Distribuição</option>
+          </select>
+        </div>
+        <div class="field-chip"><label for="fData">Data</label><input id="fData" type="date"></div>
+        <div class="field-chip"><label for="fResp">Responsável</label><input id="fResp" type="text" placeholder="Seu nome" autocomplete="name"></div>
+        <div class="field-chip"><label for="fReg">Regional</label><input id="fReg" type="text" placeholder="Regional"></div>
+      </div>
+    </details>
+
+    <div class="offline-bar" id="offlineBar" role="status"><div class="offline-dot"></div><span>Sem conexão — os dados ficam salvos neste aparelho.</span></div>
+    <div class="resume-banner" id="resumeBanner" role="status">
+      <span class="resume-banner-text" id="resumeText">Checklist em andamento — deseja continuar?</span>
+      <button type="button" class="resume-btn" onclick="restoreSession()">Continuar</button>
+      <button type="button" class="resume-dismiss" onclick="dismissResume()">Novo</button>
+    </div>
+
+    <div class="status-strip progress-bar-wrap">
+      <div class="progress-stats">
+        <div class="progress-track" role="progressbar" aria-label="Progresso da vistoria" aria-valuemin="0" aria-valuemax="100"><div class="progress-fill" id="progressFill"></div></div>
+        <span class="progress-pct" id="progressPct">0%</span>
+        <span class="progress-count" id="progressCount" title="Itens avaliados">0/0</span>
+      </div>
+      <span class="strip-score" id="stripScore" title="A nota aparece quando houver itens avaliados"><span class="strip-score-lbl">Nota</span><b>—</b><span class="score-grade">—</span></span>
+      <button type="button" class="strip-next" id="stripNext" data-mode="next" title="Ir para o próximo item pendente (N)"><span class="sn-label"><span class="sn-long">Próximo pendente</span><span class="sn-short">Próximo</span></span><kbd class="kbd-hint" aria-hidden="true">N</kbd><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></button>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-bar" id="searchBar">
+        <div class="search-input-wrap">
+          <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+          <input class="search-input" id="searchInput" type="search" placeholder="Buscar itens em todas as seções..." autocomplete="off" aria-label="Buscar itens" oninput="handleSearch(this.value)">
+          <button type="button" class="search-clear" onclick="clearSearch()" aria-label="Limpar busca"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+      </div>
+      <div class="filter-row" id="filterRow" role="group" aria-label="Filtrar por status">
+        <button type="button" class="filter-chip active" data-filter="all" onclick="setFilter('all', this)">Todos<span class="fc-n" id="fcAll">0</span></button>
+        <button type="button" class="filter-chip" data-filter="pending" onclick="setFilter('pending', this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/></svg>Pendentes<span class="fc-n" id="fcPending">0</span></button>
+        <button type="button" class="filter-chip f-ok" data-filter="ok" onclick="setFilter('ok', this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>OK<span class="fc-n" id="fcOk">0</span></button>
+        <button type="button" class="filter-chip f-warn" data-filter="warn" onclick="setFilter('warn', this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>Atenção<span class="fc-n" id="fcWarn">0</span></button>
+        <button type="button" class="filter-chip f-crit" data-filter="crit" onclick="setFilter('crit', this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></svg>Críticos<span class="fc-n" id="fcCrit">0</span></button>
+        <button type="button" class="filter-chip f-na" data-filter="na" onclick="setFilter('na', this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg>N/A<span class="fc-n" id="fcNa">0</span></button>
+      </div>
+    </div>
+
+    <main class="slides-viewport" id="content">
+      <div class="slides-track" id="slidesTrack"></div>
+      <div class="search-mode-empty" id="searchModeEmpty"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg><span>Nenhum item encontrado em nenhuma seção.</span></div>
+    </main>
+
+    <div class="bottom-bar" role="toolbar" aria-label="Ações da vistoria">
+      <button type="button" class="icon-btn" id="dashboardToggle" onclick="toggleDashboard()" title="Visão geral" aria-label="Alternar visão geral"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg><span class="btn-label">Visão geral</span></button>
+      <button type="button" class="icon-btn" id="openEmailModalBtn" onclick="openEmailModal()" title="Enviar por e-mail" aria-label="Enviar por e-mail"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg><span class="btn-label">E-mail</span></button>
+      <button type="button" class="icon-btn" onclick="showExport()" title="Exportar" aria-label="Exportar relatório"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg><span class="btn-label">Exportar</span></button>
+      <button type="button" class="save-btn" id="saveBtn" onclick="doSave()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>Salvar vistoria</button>
+    </div>
+  </div>
+</div>
+
+<!-- TELA DE VISTORIA DE IMPRESSORAS — independente do checklist -->
+<section id="printersScreen" class="printers-screen" aria-label="Vistoria de impressoras" aria-hidden="true">
+  <div class="printers-screen-header">
+    <button type="button" class="printers-back-btn" onclick="closePrintersScreen()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>Voltar ao checklist</button>
+    <div class="printers-screen-titlebar">
+      <h2 class="printers-screen-title">Vistoria de impressoras</h2>
+      <div class="printers-screen-sub" id="printersScreenStoreLabel">Loja: —</div>
+      <div class="printers-screen-count" id="printersScreenCount">0 impressoras encontradas</div>
+    </div>
+    <div class="printers-screen-search">
+      <div class="search-input-wrap">
+        <span class="search-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+        <input class="search-input" id="printersScreenSearch" type="search" placeholder="Pesquisar impressora..." aria-label="Pesquisar impressora" oninput="filterPrinters(this.value)">
+        <button type="button" class="search-clear" id="printersScreenSearchClear" onclick="clearPrintersSearch()" aria-label="Limpar pesquisa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="printers-screen-body" id="printersScreenBody"></div>
+</section>
+
+<div class="modal-backdrop" id="settingsModal" role="dialog" aria-modal="true" aria-label="Configurações">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title">Configurações</span>
+      <button class="modal-close" onclick="closeModal('settingsModal')" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <section>
+        <div class="modal-section-label">Integração / Envio</div>
+        <div class="cfg-field">
+          <label class="cfg-label" for="cfgUrl">URL do backend (Google Apps Script / webhook)</label>
+          <input class="cfg-input" id="cfgUrl" type="url" value="" placeholder="https://…">
+        </div>
+      </section>
+      <section>
+        <div class="modal-section-label">Notificações</div>
+        <div class="cfg-field">
+          <label class="cfg-label" for="cfgEmail">E-mail de alerta</label>
+          <input class="cfg-input" id="cfgEmail" type="email" placeholder="alertas@exemplo.com">
+        </div>
+      </section>
+      <section>
+        <div class="modal-section-label">Histórico</div>
+        <button type="button" class="cfg-save-btn secondary" onclick="openSavedSubmissionsModal()">Histórico de Salvamentos</button>
+      </section>
+      <section>
+        <div class="modal-section-label">Uso em campo</div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">Modo compacto</div><div class="toggle-desc">Mais itens por tela</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="densityToggle" aria-label="Modo compacto" onchange="setDensity(this.checked)"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">Manter tela ligada</div><div class="toggle-desc">Evita bloqueio durante a vistoria</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="wakeToggle" aria-label="Manter tela ligada" onchange="setWake(this.checked)"><span class="toggle-track"></span></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-label">Avançar automaticamente</div><div class="toggle-desc">Após marcar OK ou N/A, vai para o próximo item pendente</div></div>
+          <label class="toggle-switch"><input type="checkbox" id="autoAdvanceToggle" aria-label="Avançar automaticamente" onchange="Flow.setAuto(this.checked)" checked><span class="toggle-track"></span></label></div>
+      </section>
+      <section>
+        <div class="modal-section-label">Aparência</div>
+        <div class="cfg-field">
+          <label class="cfg-label" for="themeSelect">Tema</label>
+          <select class="cfg-input" id="themeSelect" onchange="setTheme(this.value)">
+            <option value="auto">Automático (sistema)</option>
+            <option value="light">Claro</option>
+            <option value="dark">Escuro</option>
+          </select>
+        </div>
+      </section>
+      <div class="cfg-hint">As mudanças ficam salvas no navegador e aparecem na próxima vez.</div>
+      <button type="button" class="cfg-save-btn" onclick="saveSettings()">Salvar configurações</button>
+    </div>
+  </div>
+</div>
+
+<!-- ATALHOS DE TECLADO -->
+<div class="modal-backdrop" id="shortcutsModal" role="dialog" aria-modal="true" aria-label="Atalhos de teclado">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title">Atalhos de teclado</span>
+      <button type="button" class="modal-close" onclick="closeModal('shortcutsModal')" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <section>
+        <div class="modal-section-label">Avaliar o item selecionado</div>
+        <dl class="kbd-list">
+          <div><dt><kbd>1</kbd></dt><dd>OK</dd></div>
+          <div><dt><kbd>2</kbd></dt><dd>Atenção</dd></div>
+          <div><dt><kbd>3</kbd></dt><dd>Crítico</dd></div>
+          <div><dt><kbd>4</kbd></dt><dd>Não se aplica</dd></div>
+          <div><dt><kbd>O</kbd></dt><dd>Escrever observação</dd></div>
+        </dl>
+      </section>
+      <section>
+        <div class="modal-section-label">Navegar</div>
+        <dl class="kbd-list">
+          <div><dt><kbd>J</kbd> <kbd>↓</kbd></dt><dd>Próximo item</dd></div>
+          <div><dt><kbd>K</kbd> <kbd>↑</kbd></dt><dd>Item anterior</dd></div>
+          <div><dt><kbd>N</kbd></dt><dd>Próximo item pendente</dd></div>
+          <div><dt><kbd>]</kbd> <kbd>[</kbd></dt><dd>Próxima / anterior seção</dd></div>
+          <div><dt><kbd>D</kbd></dt><dd>Visão geral</dd></div>
+          <div><dt><kbd>/</kbd></dt><dd>Filtrar itens</dd></div>
+        </dl>
+      </section>
+      <section>
+        <div class="modal-section-label">Geral</div>
+        <dl class="kbd-list">
+          <div><dt><kbd class="mod">Ctrl</kbd> <kbd>K</kbd></dt><dd>Paleta de comandos</dd></div>
+          <div><dt><kbd class="mod">Ctrl</kbd> <kbd>S</kbd></dt><dd>Revisar e salvar</dd></div>
+          <div><dt><kbd class="mod">Ctrl</kbd> <kbd>Z</kbd></dt><dd>Desfazer</dd></div>
+          <div><dt><kbd class="mod">Ctrl</kbd> <kbd>Y</kbd></dt><dd>Refazer</dd></div>
+          <div><dt><kbd>?</kbd></dt><dd>Mostrar estes atalhos</dd></div>
+          <div><dt><kbd>Esc</kbd></dt><dd>Fechar janela ou busca</dd></div>
+        </dl>
+      </section>
+      <p class="cfg-hint">Pressionar de novo a tecla do status atual remove a avaliação. Os atalhos de uma tecla não funcionam enquanto você digita em um campo.</p>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT MODAL -->
+<div class="modal-backdrop" id="exportModal" role="dialog" aria-modal="true" aria-label="Exportar Relatório">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title">Exportar Relatório</span>
+      <button class="modal-close" onclick="closeModal('exportModal')" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <button class="cfg-save-btn secondary" onclick="exportCSV()">
+          Exportar CSV (Google Sheets)
+        </button>
+        <button class="cfg-save-btn secondary" onclick="downloadCurrentChecklistExcel()">
+          Exportar Excel local
+        </button>
+        <button class="cfg-save-btn secondary" onclick="sendCurrentChecklistExcel()">
+          Enviar planilha atual
+        </button>
+        <button class="cfg-save-btn secondary" onclick="downloadCurrentChecklistPdf()">
+          Baixar PDF
+        </button>
+        <button class="cfg-save-btn secondary" onclick="exportJSON()">
+          Exportar Backup JSON
+        </button>
+        <button class="cfg-save-btn secondary" onclick="importChecklistBackup()">
+          Restaurar Backup JSON
+        </button>
+        <button class="cfg-save-btn secondary" onclick="retryPendingSaves()">
+          Tentar enviar pendências
+        </button>
+        <button class="cfg-save-btn secondary" onclick="copyReport()">
+          Copiar Resumo Executivo
+        </button>
+      </div>
+      <div class="cfg-hint">O relatório agora inclui checklist + vistoria de impressoras. O PDF inclui o cabeçalho do relatório e a planilha separa as impressoras em uma aba própria.</div>
+    </div>
+  </div>
+</div>
+
+<!-- E-MAIL MODAL -->
+<div class="modal-backdrop email-modal" id="emailModal" role="dialog" aria-modal="true" aria-label="Enviar por E-mail">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title">Enviar por E-mail</span>
+      <button class="modal-close" onclick="closeModal('emailModal')" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="email-field">
+        <label class="email-label" for="emailRecipients">Destinatário(s)</label>
+        <input class="email-input" id="emailRecipients" type="text" placeholder="nome@exemplo.com, outro@exemplo.com" list="emailRecipientsList">
+        <datalist id="emailRecipientsList"></datalist>
+        <div class="email-suggestion-row" id="emailSuggestions"></div>
+      </div>
+      <div class="email-field">
+        <label class="email-label" for="emailSubject">Assunto</label>
+        <input class="email-input" id="emailSubject" type="text">
+      </div>
+      <div class="email-field">
+        <label class="email-label" for="emailBody">Mensagem</label>
+        <textarea class="email-textarea" id="emailBody"></textarea>
+      </div>
+      <div class="email-field">
+        <label class="email-label" for="emailAttachments">Anexos adicionais (imagens ou PDF)</label>
+        <div class="email-attach-row">
+          <input class="email-attachment-input" id="emailAttachments" type="file" accept="image/*,.pdf,application/pdf" multiple>
+          <button type="button" class="cfg-save-btn secondary" style="width:auto;padding:0 12px" onclick="clearEmailAttachments()">Limpar</button>
+        </div>
+        <div class="email-attach-preview" id="emailAttachPreview"></div>
+      </div>
+      <div class="toggle-row small">
+        <div class="toggle-info">
+          <div class="toggle-label">Enviar automaticamente em caso de reprovação</div>
+          <div class="toggle-desc">O relatório é enviado automaticamente ao salvar se houver reprovações.</div>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="emailAutoSend">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="emailPreviewBtn" class="cfg-save-btn secondary" onclick="previewEmailPdf()" style="flex:1">Pré-visualizar PDF</button>
+        <button type="button" id="emailSendBtn" class="cfg-save-btn" onclick="sendEmailReport()" style="flex:1">Enviar por E-mail</button>
+      </div>
+      <div class="modal-section-label">Histórico de envios</div>
+      <div class="history-list" id="emailHistoryList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SAVED SUBMISSIONS MODAL -->
+<div class="modal-backdrop" id="savesModal" role="dialog" aria-modal="true" aria-label="Salvamentos do Checklist">
+  <div class="modal-sheet">
+    <div class="modal-handle" aria-hidden="true"></div>
+    <div class="modal-header">
+      <span class="modal-title">Salvamentos</span>
+      <button class="modal-close" onclick="closeModal('savesModal')" aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="cfg-hint">A lista mostra todos os salvamentos; atualize notas ou status quando precisar.</div>
+      <div class="history-list" id="savedSubmissionsList"></div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- TOAST -->
+<div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+<!-- PWA INSTALL BANNER -->
+<div class="pwa-banner" id="pwaBanner">
+  <div class="pwa-banner-icon"><img src="assets/logo-brand.png" alt=""></div>
+  <div class="pwa-banner-text">
+    <div class="pwa-banner-title">Instalar Checklist TI</div>
+    <div class="pwa-banner-sub">Acesse offline, como aplicativo</div>
+  </div>
+  <button type="button" class="pwa-install-btn" id="pwaInstallBtn">Instalar</button>
+  <button type="button" class="pwa-dismiss-btn" onclick="dismissPWA()" aria-label="Dispensar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+</div>
+
+<script src="js/00-runtime.js"></script>
+<script src="js/01-utils.js"></script>
+<script src="js/02-splash.js"></script>
+<script src="js/03-config.js"></script>
+<script src="js/04-logo-data.js"></script>
+<script src="js/05-printers.js"></script>
+<script src="js/06-state.js"></script>
+<script src="js/07-render.js"></script>
+<script src="js/07b-dashboard.js"></script>
+<script src="js/08-modals-export.js"></script>
+<script src="js/09-save.js"></script>
+<script src="js/11-boot.js"></script>
+<script src="js/12-history-undo.js"></script>
+<script src="js/13-field-tools.js"></script>
+<script src="js/14-pwa-enhance.js"></script>
+<script src="js/15-feedback.js"></script>
+<script src="js/16-pro-features.js"></script>
+<script src="js/17-shell.js"></script>
+<script src="js/18-flow.js"></script>
+<script src="js/19-command-palette.js"></script>
+</body>
+</html>
