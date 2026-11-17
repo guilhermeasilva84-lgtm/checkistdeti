@@ -72,7 +72,7 @@ function getOrCreateSheet(ss, sheetName) {
   return sheet;
 }
 
-// Teste manual: execute esta função para verificar se o script funciona
+
 function testeManual() {
   const payload = {
     sheetName: 'Checklist TI Lojas',
