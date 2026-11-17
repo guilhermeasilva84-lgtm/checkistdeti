@@ -1,15 +1,14 @@
-/* Configuração (backend) e modelo de dados das seções */
-"use strict";
-// Estado e lógica principal da aplicação
 
-/* URL do backend (Google Apps Script / webhook). Fica vazia no repositório:
-   informe a sua em Configurações ou preencha aqui. NUNCA publique URLs com token/assinatura. */
+"use strict";
+
+
+
 const DEFAULT_URL = "";
 const BACKEND_URL_KEY = 'ti-backend-url';
 const PENDING_QUEUE_KEY = 'ti-pending-queue';
 
 
-/* DATA MODEL */
+
 const DEFAULT_SECTIONS = [
   { id: "geral",   title: "Geral",     items: [ "Gerente presente?", "Resp. TI presente", "PDVs padrão abertos", "Quantidade pdv", "PDVs self checkout abertos", "PDVs self checkout fila"] },   
   { id: "visao",   title: "Visão",     items: ["Loja segue padrão TI", "Equipamentos fora da área", "Não há acúmulo de sucata"] },
@@ -30,5 +29,5 @@ const DEFAULT_SECTIONS = [
   { id: "seg",     title: "Segurança", items: ["Equipamentos protegidos", "Sem risco furto", "Acesso CPD controlado"] }
 ];
 
-/* SEÇÕES DO CHECKLIST — edite DEFAULT_SECTIONS acima para mudar o modelo. */
+
 let SECTIONS = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
