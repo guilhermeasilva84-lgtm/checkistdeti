@@ -1,5 +1,4 @@
-/* Runtime: tratamento global de erros */
-/* Runtime safety: prevent technical exceptions from becoming a white screen. */
+
 window.addEventListener('error', function (event) {
   console.error('[Checklist TI] Erro de interface:', event.error || event.message);
   const splash = document.getElementById('splash');
