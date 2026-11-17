@@ -1,5 +1,4 @@
-/* Tela de carregamento (splash): progresso real */
-/* Controle da tela de carregamento: barra de progresso real + etapas */
+
 (function(){
   var root=document.documentElement, reduce=false;
   try{reduce=matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
