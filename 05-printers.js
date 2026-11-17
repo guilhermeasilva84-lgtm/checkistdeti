@@ -1,4 +1,4 @@
-/* Catálogo e vistoria de impressoras */
+
 const PRINTERS_FILE = 'impressoras-exemplo.xlsx';
 let printersByStore = {};
 let printersLoadState = 'loading';
